@@ -1,11 +1,12 @@
 import datetime
+import os
 
 import boto3
 
 CE_REGION = "us-east-1"
 SES_REGION = "us-west-2"
-SENDER = "kejia.ma@gmail.com"
-RECIPIENT = "kejia.ma@gmail.com"
+SENDER = os.environ["SENDER_EMAIL"]
+RECIPIENT = os.environ["RECIPIENT_EMAIL"]
 
 
 def lambda_handler(event, context):
