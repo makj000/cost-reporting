@@ -2,11 +2,19 @@ import datetime
 import os
 
 import boto3
+from boto3.dynamodb.conditions import Key
 
 CE_REGION = "us-east-1"
 SES_REGION = "us-west-2"
 SENDER = os.environ["SENDER_EMAIL"]
 RECIPIENT = os.environ["RECIPIENT_EMAIL"]
+DIGEST_TABLE_NAME = os.environ["DIGEST_TABLE_NAME"]
+
+
+def _collect_digest_sections(week_start):
+    table = boto3.resource("dynamodb").Table(DIGEST_TABLE_NAME)
+    response = table.query(KeyConditionExpression=Key("week_start").eq(week_start))
+    return [(item["project"], item["section"]) for item in response["Items"]]
 
 
 def lambda_handler(event, context):
@@ -39,6 +47,9 @@ def lambda_handler(event, context):
         f"Credits applied: ${credit:.2f}\n"
         f"Actual charge (after credits): ${actual_charge:.2f}\n"
     )
+
+    for project, section in _collect_digest_sections(end.isoformat()):
+        body += f"\n\n--- {project} ---\n{section}\n"
 
     ses = boto3.client("ses", region_name=SES_REGION)
     ses.send_email(
