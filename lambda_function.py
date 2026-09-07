@@ -48,8 +48,12 @@ def lambda_handler(event, context):
         f"Actual charge (after credits): ${actual_charge:.2f}\n"
     )
 
-    for project, section in _collect_digest_sections(end.isoformat()):
+    digest_sections = _collect_digest_sections(end.isoformat())
+    for project, section in digest_sections:
         body += f"\n\n--- {project} ---\n{section}\n"
+
+    if digest_sections:
+        subject = f"Weekly Summary — {end.isoformat()}: ${usage:.2f} AWS cost, {len(digest_sections)} project update(s)"
 
     ses = boto3.client("ses", region_name=SES_REGION)
     ses.send_email(
