@@ -100,9 +100,12 @@ def _format_credit_balance(credit_balance):
     if credit_balance is None:
         return "Credit balance left: unavailable\n"
 
+    not_yet_invoiced = credit_balance["last_cycle_left"] - credit_balance["estimated_left"]
+
     return (
-        f"Credit balance left (estimated): ${credit_balance['estimated_left']:.2f}\n"
-        f"Credit balance left (last billing cycle): ${credit_balance['last_cycle_left']:.2f}\n"
+        f"Credit balance remaining (real-time estimate): ${credit_balance['estimated_left']:.2f}\n"
+        f"Credit balance remaining (per last finalized invoice, may lag): ${credit_balance['last_cycle_left']:.2f}\n"
+        f"  -> ${not_yet_invoiced:.2f} of usage has occurred but is not yet invoiced\n"
         f"Enabled credits: {credit_balance['enabled_count']}\n"
     )
 
