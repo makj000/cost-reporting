@@ -96,6 +96,10 @@ def _collect_credit_balance(end):
     }
 
 
+def _amount_line(amount, label):
+    return f"{f'${amount:.2f}':>9}  {label}\n"
+
+
 def _format_credit_balance(credit_balance):
     if credit_balance is None:
         return "Credit balance left: unavailable\n"
@@ -103,10 +107,10 @@ def _format_credit_balance(credit_balance):
     not_yet_invoiced = credit_balance["last_cycle_left"] - credit_balance["estimated_left"]
 
     return (
-        f"Credit balance remaining (real-time estimate): ${credit_balance['estimated_left']:.2f}\n"
-        f"Credit balance remaining (per last finalized invoice, may lag): ${credit_balance['last_cycle_left']:.2f}\n"
-        f"  -> ${not_yet_invoiced:.2f} of usage has occurred but is not yet invoiced\n"
-        f"Enabled credits: {credit_balance['enabled_count']}\n"
+        _amount_line(credit_balance["estimated_left"], "Credit balance remaining (real-time estimate)")
+        + _amount_line(credit_balance["last_cycle_left"], "Credit balance remaining (per last finalized invoice, may lag)")
+        + _amount_line(not_yet_invoiced, "Usage occurred but not yet invoiced")
+        + f"{'':>9}  Enabled credits: {credit_balance['enabled_count']}\n"
     )
 
 
@@ -142,9 +146,9 @@ def lambda_handler(event, context):
     subject = f"AWS weekly cost report: ${usage:.2f} usage, ${actual_charge:.2f} charged ({start.isoformat()} to {end.isoformat()})"
     body = (
         f"AWS cost for {start.isoformat()} to {end.isoformat()}:\n\n"
-        f"Usage cost (before credits): ${usage:.2f}\n"
-        f"Credits applied: ${credit:.2f}\n"
-        f"Actual charge (after credits): ${actual_charge:.2f}\n"
+        f"{_amount_line(usage, 'Usage cost (before credits)')}"
+        f"{_amount_line(credit, 'Credits applied')}"
+        f"{_amount_line(actual_charge, 'Actual charge (after credits)')}"
         f"{_format_credit_balance(credit_balance)}"
     )
 
