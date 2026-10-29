@@ -1,6 +1,8 @@
 import datetime
+import html
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 
@@ -96,6 +98,21 @@ def _collect_credit_balance(end):
     }
 
 
+COLOR_TAG = re.compile(r"\[\[(green|red)\]\]")
+COLOR_HEX = {"green": "#1a7f37", "red": "#cf222e"}
+
+
+def _render_html(body):
+    lines = []
+    for line in body.split("\n"):
+        match = COLOR_TAG.search(line)
+        text = html.escape(COLOR_TAG.sub("", line))
+        if match:
+            text = f'<span style="color:{COLOR_HEX[match.group(1)]};font-weight:bold">{text}</span>'
+        lines.append(text)
+    return '<pre style="font-family:Menlo,Consolas,monospace;font-size:13px">' + "\n".join(lines) + "</pre>"
+
+
 def _amount_line(amount, label):
     return f"{f'${amount:.2f}':>9}  {label}\n"
 
@@ -165,7 +182,10 @@ def lambda_handler(event, context):
         Destination={"ToAddresses": [RECIPIENT]},
         Message={
             "Subject": {"Data": subject},
-            "Body": {"Text": {"Data": body}},
+            "Body": {
+                "Text": {"Data": COLOR_TAG.sub("", body)},
+                "Html": {"Data": _render_html(body)},
+            },
         },
     )
 
